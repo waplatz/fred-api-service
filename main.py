@@ -6,27 +6,42 @@ import requests
 import os
 import csv
 import io
+from supabase import create_client, Client
 
 # 🔹 Load environment variables
 load_dotenv()
 FRED_API_KEY = os.getenv("FRED_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 print("DEBUG: Loaded FRED_API_KEY =", FRED_API_KEY)
+print("DEBUG: Loaded SUPABASE_URL =", SUPABASE_URL)
 
-# 🔹 Basic MVP developer API key (for direct API usage)
-API_KEY = "my-secret-mvp-key"
+# 🔹 Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # 🔹 Initialize FastAPI and Jinja2 templates
-app = FastAPI(title="FRED Data API with Public UI")
+app = FastAPI(title="FRED Data API with Supabase Auth & UI")
 templates = Jinja2Templates(directory="templates")
 
 BASE_URL = "https://api.stlouisfed.org/fred/series/observations"
 
-# ✅ Authentication for developer API endpoints
+# ✅ Supabase Authentication dependency
 def verify_api_key(x_api_key: str = Header(...)):
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid or missing API Key")
+    # Query Supabase for matching API key
+    result = supabase.table("api_keys").select("*").eq("api_key", x_api_key).execute()
+    if not result.data:
+        raise HTTPException(status_code=401, detail="Invalid API Key")
 
-# ✅ Fetch FRED data
+    user = result.data[0]
+
+    # Check usage limit
+    if user["request_count"] >= user["request_limit"]:
+        raise HTTPException(status_code=429, detail="Request limit reached. Upgrade your plan.")
+
+    # Increment request count
+    supabase.table("api_keys").update({"request_count": user["request_count"] + 1}).eq("api_key", x_api_key).execute()
+
+# ✅ Helper: Fetch FRED data with optional date filters
 def fetch_fred_series(series_id: str, start_date=None, end_date=None):
     params = {"series_id": series_id, "api_key": FRED_API_KEY, "file_type": "json"}
     if start_date:
@@ -39,7 +54,7 @@ def fetch_fred_series(series_id: str, start_date=None, end_date=None):
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return response.json()
 
-# ✅ Convert JSON observations to CSV
+# ✅ Helper: Convert FRED observations to CSV
 def observations_to_csv(data):
     output = io.StringIO()
     writer = csv.writer(output)
@@ -77,7 +92,7 @@ def download_data(dataset: str, start_date: str = None, end_date: str = None, fo
 
     return data
 
-# ✅ Developer API Endpoints (Require API Key)
+# ✅ Developer API Endpoints (Require Supabase API Key)
 def create_endpoints(name, series_id):
     @app.get(f"/{name}")
     def get_series(start_date: str = None, end_date: str = None, auth: str = Depends(verify_api_key)):
