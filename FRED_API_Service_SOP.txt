@@ -1,0 +1,118 @@
+
+SOP: Building & Managing the FRED Data API Service
+===================================================
+
+1. Project Overview
+-------------------
+- Purpose: Provide a REST API that retrieves economic data from the FRED API and exposes multiple endpoints (GDP, Inflation, Interest Rates, etc.).
+- Tech Stack:
+  - FastAPI (Python web framework)
+  - Uvicorn (ASGI server for FastAPI)
+  - python-dotenv (loads environment variables)
+  - requests (HTTP client for fetching FRED data)
+  - Ubuntu 24.04 (development OS)
+- Current Project Location: /home/will/fred-api-service
+- Key Files:
+  - main.py → API logic
+  - .env → environment variables (contains API keys)
+  - venv/ → Python virtual environment
+
+2. Prerequisites
+----------------
+- Ubuntu system with Python 3.10+ installed.
+- Git installed for version control.
+- FRED API key stored in .env file.
+- Internet access for FRED API requests.
+
+3. Initial Setup
+----------------
+1. Update System:
+   sudo apt update && sudo apt upgrade -y
+
+2. Install Python & Git:
+   sudo apt install python3 python3-pip python3-venv git -y
+
+3. Create Project Folder:
+   mkdir fred-api-service && cd fred-api-service
+
+4. Virtual Environment Setup
+----------------------------
+1. Create Virtual Environment:
+   python3 -m venv venv
+
+2. Activate Virtual Environment:
+   source venv/bin/activate
+
+5. Install Required Packages
+----------------------------
+pip install fastapi uvicorn requests python-dotenv
+
+6. Create and Configure .env
+----------------------------
+1. Create .env file:
+   nano .env
+
+2. Add FRED API Key:
+   FRED_API_KEY=your_fred_api_key_here
+
+7. Implementing the API
+-----------------------
+1. Create main.py:
+   nano main.py
+
+2. Insert Base Code (see full implementation in main.py of project).
+
+8. Running the API Locally
+--------------------------
+1. Start the Server:
+   uvicorn main:app --reload
+
+2. Access API in Browser:
+   http://127.0.0.1:8000/gdp
+
+3. Check Auto-Generated Docs:
+   http://127.0.0.1:8000/docs
+
+9. Debugging Checklist
+----------------------
+- If API Key shows None → .env is not loaded. Verify filename and location.
+- If FRED rejects request → check if series_id is valid or API key is correct.
+- If endpoint returns 404 → you accessed / instead of /gdp.
+
+10. Expanding the API
+---------------------
+- To add new indicators, find the FRED series ID and create a new endpoint using fetch_fred_series().
+- Example:
+  @app.get("/industrial-production")
+  def get_industrial_production():
+      return fetch_fred_series("INDPRO")
+
+11. Deployment (Future Step)
+----------------------------
+- Push code to GitHub.
+- Deploy using Render or Railway.
+- Add .env variables in deployment environment.
+
+12. Enhancements Roadmap
+------------------------
+- Add query parameters (start_date, end_date).
+- Add /bulk endpoint (multiple series in one call).
+- Add /latest endpoint (returns only most recent values).
+- Integrate Supabase for API key management & usage limits.
+- Add Stripe for monetization.
+
+13. Maintenance Tips
+--------------------
+- Keep requirements.txt updated:
+  pip freeze > requirements.txt
+- Document new endpoints.
+- Secure API keys.
+
+Usage Summary
+-------------
+To start work:
+cd ~/fred-api-service
+source venv/bin/activate
+uvicorn main:app --reload
+
+To stop: CTRL + C

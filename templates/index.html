@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FRED Data Downloader</title>
+</head>
+<body>
+    <h2>📊 FRED Data Downloader</h2>
+    <form action="/download" method="get">
+        <label>Select Dataset:</label>
+        <select name="dataset">
+            <option value="gdp">GDP</option>
+            <option value="inflation">Inflation (CPI)</option>
+            <option value="interest-rates">Interest Rates</option>
+            <option value="unemployment">Unemployment Rate</option>
+            <option value="housing-starts">Housing Starts</option>
+        </select>
+        <br><br>
+
+        <label>Start Date:</label>
+        <input type="date" name="start_date"><br><br>
+
+        <label>End Date:</label>
+        <input type="date" name="end_date"><br><br>
+
+        <label>Output Format:</label>
+        <select name="format">
+            <option value="json">JSON</option>
+            <option value="csv">CSV</option>
+        </select><br><br>
+
+        <button type="submit">Download Data</button>
+    </form>
+</body>
+</html>
+
